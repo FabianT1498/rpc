@@ -1,41 +1,3 @@
-Hotel_Mascotas
-
-
-
-Registro de mascota
-{guardar/actualizar cliente (Cliente),
-guardar/actualizar mascota (Mascotas),
-registrar a las mascotas (Registro_Mascotas),
-agregar a historial (Historial_Mascotas)
-}
-
-Asignar un cuarto a la mascotas {
-buscar por habitaciones disponibles (Habitaciones),
-asignar habitacion (Registro_Mascotas, Historial_Mascotas,
-	Habitaciones)}
-
-Retirar a las mascotas del hotel {borrar registro (Registro_Mascotas), cambiar estado habitación (Habitaciones)}
-
-Cantidad de cuartos ocupados {contar el nro. de documentos que tienen como estado "ocupado" (Habitaciones)}
-
-Listado de mascotas albergadas y no. de cuarto asignado {obtener los nombres de las mascotas y las habitaciones donde
-							 se hospedan (Registro_Mascotas)}
-
-Cuantas veces se ha registrado una mascota determinada {revisar el historial y contar el nro. de veces que se ha hospedado la mascota
-							 de un cliente en especifico (Historial_Mascotas)}
-
-
-Collecciones:
-
-
-
-
-
-
-
-
-
-
 Clientes{
 	_id,
 	direccion,
@@ -50,8 +12,7 @@ Mascotas{
     cedula_cliente,
     nombre,
     edad,
-    raza,
-    descripcion}
+    raza}
 
 Habitaciones{
     _id,

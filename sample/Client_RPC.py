@@ -4,10 +4,11 @@ from xmlrpc.client import ServerProxy
 
 proxy = ServerProxy('http://localhost:8000/', allow_none = True)
 
-_infoRegistro = {}
-_infoCliente = {'cedula': '40','nombre': 'Luis'}
+_infoRegistro = {'fecha_salida': '20/02/13'}
+_infoCliente = {'cedula': '40','nombre': 'Luis', 'apellido': 'Trillo',
+                'correo': 'fabiantrillo1498@gmail.com', 'direccion': 'Los mangos'}
 
-_infoMascota = {'nombre': 'Mia'}
+_infoMascota = {'nombre': 'Puppi', 'edad': 20, 'raza': 'Poodle'}
 
 
 #_infoRegistro[tipo_habitacion, nro_piso, nro_habitacion, fecha_entrada, hora_entrada, fecha_salida, hora_salida]
