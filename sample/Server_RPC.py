@@ -1,4 +1,4 @@
-#Servidor RPC (Remote Procedure Call) con XML-RPC
+# Servidor RPC (Remote Procedure Call) con XML-RPC
 
 import pymongo
 from pymongo import MongoClient
@@ -7,21 +7,22 @@ import datetime
 
 import pprint
 
-_hotelDB = 'hotel_mascotas'
+_hotelDB = 'hotel_mascotas4'
 _hotelCollections = ['Clientes', 'Mascotas', 'Habitaciones', 'Registros_Mascotas']
 
-class HotelRPC:
 
-    _metodos_rpc = ["registrar_mascota", "mostrar_registros",
-                    "asignar_habitacion", "retirar_mascota", "habitaciones_ocupadas", "mascotas_hospedadas"]
-    
+class HotelRPC:
+    _metodos_rpc = ["registrar_mascota", "asignar_habitacion", "retirar_mascota",
+                    "habitaciones_ocupadas", "mascotas_hospedadas", "total_visitas",
+                    "mostrar_habitaciones_libres"]
+
     client = MongoClient('mongodb://localhost:27018/')
 
     def __init__(self, url):
 
         self._db = self.client[_hotelDB]
 
-        self._server = SimpleXMLRPCServer(url, allow_none = True)
+        self._server = SimpleXMLRPCServer(url, allow_none=True)
 
         for metodo in self._metodos_rpc:
             self._server.register_function(getattr(self, metodo))
@@ -29,7 +30,7 @@ class HotelRPC:
     def es_habitacion_disponible(self, nro_habitacion):
         habitaciones_coll = self._db[_hotelCollections[2]]
 
-        habitacion_document = habitaciones_coll.find_one({'nro_habitacion': nro_habitacion,
+        habitacion_document = habitaciones_coll.find_one_and_update({'nro_habitacion': nro_habitacion,
                                                           'estado': 'disponible'})
         if habitacion_document is None:
             return False
@@ -49,7 +50,6 @@ class HotelRPC:
                               'precio': habitacion['precio']
                               })
         return contenido
-
 
     def registrar_mascota(self, kwargs_for_cliente={}, kwargs_for_mascota={}, kwargs_for_registro={}):
 
@@ -84,10 +84,9 @@ class HotelRPC:
             pprint.pprint(mascota['nombre'] + ' ya existe')
             id_mascota = str(mascota_document['_id'])
 
-
         registro_document = registros_coll.find_one({'cedula_cliente': cliente['cedula'],
-                                                'id_mascota': id_mascota,
-                                               'estado': 'alojado'})
+                                                     'id_mascota': id_mascota,
+                                                     'estado': 'alojado'})
         id_registro = None
 
         """ Verificar si mascota no esta alojada actualmente"""
@@ -112,17 +111,16 @@ class HotelRPC:
 
         return True
 
-    def asignar_habitacion(self, cedula_cliente, nombre_mascota, nro_habitacion= 0):
-
-        if not self.es_habitacion_disponible(nro_habitacion) or nro_habitacion < 1:
-            return False
+    def asignar_habitacion(self, cedula_cliente, nombre_mascota, nro_habitacion=0):
 
         mascotas_coll = self._db[_hotelCollections[1]]
 
         mascota_document = mascotas_coll.find_one(
-                {'cedula_cliente': cedula_cliente,
-                 'nombre': nombre_mascota}
+            {'cedula_cliente': cedula_cliente,
+             'nombre': nombre_mascota}
         )
+
+        print(mascota_document['_id'])
 
         id_mascota = None
 
@@ -130,16 +128,18 @@ class HotelRPC:
         if mascota_document:
             id_mascota = str(mascota_document['_id'])
         else:
+            print("No existe animal")
             return False
 
         registros_coll = self._db[_hotelCollections[3]]
 
         registro_document = registros_coll.find_one_and_update(
-                {'cedula_cliente': cedula_cliente, 'id_mascota': id_mascota, 'estado': 'alojado'},
-                {'$set': {'nro_habitacion': nro_habitacion}})
+            {'cedula_cliente': cedula_cliente, 'id_mascota': id_mascota, 'estado': 'alojado'},
+            {'$set': {'nro_habitacion': nro_habitacion}})
 
         """Revisar si la mascota tiene un registro activo"""
         if not registro_document:
+            print("No existe registro")
             return False
 
         habitaciones_coll = self._db[_hotelCollections[2]]
@@ -203,9 +203,10 @@ class HotelRPC:
         mascotas_coll = self._db[_hotelCollections[1]]
 
         for registro in registros:
-            contenido.append({'nombre_mascota': registro['nombre_mascota'],
-                              'cedula_cliente': registro['cedula_cliente'],
-                              'nro_habitacion': registro['nro_habitacion']})
+            dic = {'nombre_mascota': registro['nombre_mascota'],
+                   'cedula_cliente': registro['cedula_cliente'],
+                   'nro_habitacion': registro['nro_habitacion']}
+            contenido.append(dic)
 
         return contenido
 
@@ -231,6 +232,6 @@ class HotelRPC:
 
 
 if __name__ == '__main__':
-    rpc =  HotelRPC(('localhost', 8000))
+    rpc = HotelRPC(('localhost', 8000))
     print("Se ha iniciado el servidor RPC.")
     rpc.iniciar_servidor()
