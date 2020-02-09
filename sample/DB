@@ -66,6 +66,7 @@ Registros_Mascotas{
     _id,
     id_mascota,
     cedula_cliente,
+    nombre_mascota
     nro_habitacion,
     fecha_entrada,
     hora_entrada,

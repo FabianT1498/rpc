@@ -12,7 +12,8 @@ _hotelCollections = ['Clientes', 'Mascotas', 'Habitaciones', 'Tipos_Habitaciones
 
 class HotelRPC:
 
-    _metodos_rpc = ["registrar_mascota", "mostrar_registros", "asignar_habitacion", "retirar_mascota"]
+    _metodos_rpc = ["registrar_mascota", "mostrar_registros",
+                    "asignar_habitacion", "retirar_mascota", "habitaciones_ocupadas", "mascotas_hospedadas"]
     
     client = MongoClient('mongodb://localhost:27018/')
 
@@ -106,6 +107,9 @@ class HotelRPC:
 
         else:
             pprint.pprint(mascota['nombre'] + ' ya esta registrado')
+            return False
+
+        return True
 
     def asignar_habitacion(self, cedula_cliente, nombre_mascota, nro_habitacion=0):
 
@@ -137,32 +141,91 @@ class HotelRPC:
 
         habitaciones_coll = self._db[_hotelCollections[2]]
 
-        """Ocupar la habitacion"""
-        db.example.find_one_and_update(
-            ...
-        {'_id': 'userid'},
-        ...
-        {'$inc': {'seq': 1}},
-        ...
-        projection = {'seq': True, '_id': False},
-                     ...
-        return_document = ReturnDocument.AFTER)
-        {u'seq': 2}
-
         """Cambia el estado de la habitacion"""
         habitaciones_coll.find_one_and_update(
             {'nro_habitacion': nro_habitacion},
             {'$set': {'estado': 'ocupada'}},
             upsert=True)
 
-    def retirar_mascota(self, nombre):
-        del self._datos[nombre]
-    # def habitaciones_ocupadas(self, nombre):
-    #     return nombre in self._datos
-    #
-    # def mascotas_hospedadas(self):
-    #
-    # def total_visitas(self):
+        return True
+
+    def retirar_mascota(self, cedula_cliente='', nombre_mascota=''):
+        mascotas_coll = self._db[_hotelCollections[1]]
+
+        mascota_document = mascotas_coll.find_one({'cedula_cliente': cedula_cliente,
+                                                   'nombre': nombre_mascota})
+        id_mascota = None
+
+        """ Verificar si mascota esta en la coleccion """
+        if mascota_document:
+            id_mascota = str(mascota_document['_id'])
+        else:
+            return False
+
+        registros_coll = self._db[_hotelCollections[4]]
+
+        """ Modificar el estado del ultimo registro """
+        registro_document = registros_coll.find_one_and_update(
+            {'cedula_cliente': cedula_cliente, 'id_mascota': id_mascota, 'estado': 'alojado'},
+            {'$set': {'estado': 'retirado'}})
+
+        nro_habitacion = None
+
+        if (registro_document):
+            nro_habitacion = registro_document['nro_habitacion']
+        else:
+            return False
+
+        """Liberar habitacion"""
+        habitaciones_coll = self._db[_hotelCollections[2]]
+
+        habitaciones_coll.find_one_and_update(
+            {'nro_habitacion': nro_habitacion},
+            {'$set': {'estado': 'ocupada'}})
+
+        return True
+
+    def habitaciones_ocupadas(self):
+        habitaciones_coll = self._db[_hotelCollections[2]]
+
+        pprint.pprint("Habitaciones libres")
+        return habitaciones_coll.count_documents({'estado': 'ocupada'})
+
+    def mascotas_hospedadas(self):
+        registros_coll = self._db[_hotelCollections[4]]
+
+        registros = registros_coll.find({'estado': 'alojado'})
+
+        contenido = []
+
+        if not registros:
+            return contenido
+
+        mascotas_coll = self._db[_hotelCollections[1]]
+
+        for registro in registros:
+            contenido.append({'nombre_mascota': registro['nombre_mascota'],
+                              'cedula_cliente': registro['cedula_cliente'],
+                              'nro_habitacion': registro['nro_habitacion']})
+
+        return contenido
+
+    def total_visitas(self, nombre_mascota='', cedula_cliente=''):
+        mascotas_coll = self._db[_hotelCollections[1]]
+
+        mascota_document = mascotas_coll.find_one({'cedula_cliente': cedula_cliente,
+                                                   'nombre': nombre_mascota})
+        id_mascota = None
+
+        """ Verificar si mascota esta en la coleccion """
+        if mascota_document:
+            id_mascota = str(mascota_document['_id'])
+        else:
+            return False
+
+        registros_coll = self._db[_hotelCollections[4]]
+
+        return registros_coll.count_documents({'id_mascota': id_mascota})
 
     def iniciar_servidor(self):
         self._server.serve_forever()
