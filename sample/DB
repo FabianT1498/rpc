@@ -1,0 +1,93 @@
+Hotel_Mascotas
+
+
+
+Registro de mascota
+{guardar/actualizar cliente (Cliente),
+guardar/actualizar mascota (Mascotas),
+registrar a las mascotas (Registro_Mascotas),
+agregar a historial (Historial_Mascotas)
+}
+
+Asignar un cuarto a la mascotas {
+buscar por habitaciones disponibles (Habitaciones),
+asignar habitacion (Registro_Mascotas, Historial_Mascotas,
+	Habitaciones)}
+
+Retirar a las mascotas del hotel {borrar registro (Registro_Mascotas), cambiar estado habitación (Habitaciones)}
+
+Cantidad de cuartos ocupados {contar el nro. de documentos que tienen como estado "ocupado" (Habitaciones)}
+
+Listado de mascotas albergadas y no. de cuarto asignado {obtener los nombres de las mascotas y las habitaciones donde
+							 se hospedan (Registro_Mascotas)}
+
+Cuantas veces se ha registrado una mascota determinada {revisar el historial y contar el nro. de veces que se ha hospedado la mascota
+							 de un cliente en especifico (Historial_Mascotas)}
+
+
+Collecciones:
+
+
+
+
+
+
+
+
+
+
+Clientes{
+	_id,
+	direccion,
+	correo,
+	nombre,
+	apellido,
+	cedula,
+}
+
+Mascotas{
+    _id:
+    cedula_cliente,
+    nombre,
+    edad,
+    raza,
+    descripcion}
+
+Habitaciones{
+    _id,
+    nro_habitación,
+    tamanio,
+    precio
+    estado {"ocupada"/"disponible"/"en servicio"/"deshabilitada"},
+}
+
+
+Registros_Mascotas{
+    _id,
+    id_mascota,
+    cedula_cliente,
+    nro_habitacion,
+    fecha_entrada,
+    hora_entrada,
+    fecha_salida,
+    hora_salida
+    estado {retirado, alojado}
+}
+
+
+///////// INDICES
+Clientes collection indexes
+
+db.Clientes.ensureIndex({"nombre" : 1, "apellido" : 1}, {"sparse" : true})
+
+
+Mascotas collection indexes
+
+db.Mascotas.ensureIndex({"id_clientes" : 1}, {"sparse" : true})
+
+db.Mascotas.ensureIndex({"nombre" : 1}, {"sparse" : true})
+
+
+files collection indexes
+
+db.files.files.ensureIndex("_id" : 1)
