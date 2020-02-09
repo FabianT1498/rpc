@@ -8,7 +8,7 @@ import datetime
 import pprint
 
 _hotelDB = 'hotel_mascotas'
-_hotelCollections = ['Clientes', 'Mascotas', 'Habitaciones', 'Tipos_Habitaciones', 'Registros_Mascotas']
+_hotelCollections = ['Clientes', 'Mascotas', 'Habitaciones', 'Registros_Mascotas']
 
 class HotelRPC:
 
@@ -41,20 +41,21 @@ class HotelRPC:
         pprint.pprint("Habitaciones libres")
         habitaciones = habitaciones_coll.find({'estado': 'disponible'})
 
-        if habitaciones is None:
-            pprint.pprint("Ninguna habitacion disponible")
-        else:
-            pprint.pprint("Numero Tamanio      Precio")
-            for habitacion in habitaciones:
-                pprint.pprint(habitacion['nro_habitacion'] + "  " + habitacion['tamanio'] + "   " + habitacion['precio'])
+        contenido = []
+
+        for habitacion in habitaciones:
+            contenido.append({'nro_habitacion': habitacion['nro_habitacion'],
+                              'tamanio': habitacion['tamanio'],
+                              'precio': habitacion['precio']
+                              })
+        return contenido
+
 
     def registrar_mascota(self, kwargs_for_cliente={}, kwargs_for_mascota={}, kwargs_for_registro={}):
 
-        es_nueva_mascota = False
-
         clientes_coll = self._db[_hotelCollections[0]]
         mascotas_coll = self._db[_hotelCollections[1]]
-        registros_coll = self._db[_hotelCollections[4]]
+        registros_coll = self._db[_hotelCollections[3]]
 
         cliente = dict(kwargs_for_cliente)
         mascota = dict(kwargs_for_mascota)
@@ -111,15 +112,17 @@ class HotelRPC:
 
         return True
 
-    def asignar_habitacion(self, cedula_cliente, nombre_mascota, nro_habitacion=0):
+    def asignar_habitacion(self, cedula_cliente, nombre_mascota, nro_habitacion= 0):
 
         if not self.es_habitacion_disponible(nro_habitacion) or nro_habitacion < 1:
             return False
 
         mascotas_coll = self._db[_hotelCollections[1]]
 
-        mascota_document = mascotas_coll.find_one({'cedula_cliente': cedula_cliente,
-                                                     'nombre': nombre_mascota})
+        mascota_document = mascotas_coll.find_one(
+                {'cedula_cliente': cedula_cliente,
+                 'nombre': nombre_mascota}
+        )
 
         id_mascota = None
 
@@ -129,10 +132,10 @@ class HotelRPC:
         else:
             return False
 
-        registros_coll = self._db[_hotelCollections[4]]
+        registros_coll = self._db[_hotelCollections[3]]
 
         registro_document = registros_coll.find_one_and_update(
-                {'cedula_cliente': cedula_cliente, 'id_mascota': id_mascota,'estado': 'alojado'},
+                {'cedula_cliente': cedula_cliente, 'id_mascota': id_mascota, 'estado': 'alojado'},
                 {'$set': {'nro_habitacion': nro_habitacion}})
 
         """Revisar si la mascota tiene un registro activo"""
@@ -162,7 +165,7 @@ class HotelRPC:
         else:
             return False
 
-        registros_coll = self._db[_hotelCollections[4]]
+        registros_coll = self._db[_hotelCollections[3]]
 
         """ Modificar el estado del ultimo registro """
         registro_document = registros_coll.find_one_and_update(
@@ -181,25 +184,21 @@ class HotelRPC:
 
         habitaciones_coll.find_one_and_update(
             {'nro_habitacion': nro_habitacion},
-            {'$set': {'estado': 'ocupada'}})
+            {'$set': {'estado': 'disponible'}})
 
         return True
 
     def habitaciones_ocupadas(self):
         habitaciones_coll = self._db[_hotelCollections[2]]
 
-        pprint.pprint("Habitaciones libres")
         return habitaciones_coll.count_documents({'estado': 'ocupada'})
 
     def mascotas_hospedadas(self):
-        registros_coll = self._db[_hotelCollections[4]]
+        registros_coll = self._db[_hotelCollections[3]]
 
         registros = registros_coll.find({'estado': 'alojado'})
 
         contenido = []
-
-        if not registros:
-            return contenido
 
         mascotas_coll = self._db[_hotelCollections[1]]
 
@@ -223,7 +222,7 @@ class HotelRPC:
         else:
             return False
 
-        registros_coll = self._db[_hotelCollections[4]]
+        registros_coll = self._db[_hotelCollections[3]]
 
         return registros_coll.count_documents({'id_mascota': id_mascota})
 
